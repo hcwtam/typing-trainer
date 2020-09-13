@@ -10,7 +10,11 @@ interface Data {
 }
 
 const Wrapper = styled.div`
-  width: 50vw;
+  width: 800px;
+  height: 280px;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 10px 10px 20px #292e47, -5px -5px 20px #505884;
 `;
 const Input = styled.input`
   width: 100%;
@@ -19,20 +23,23 @@ const Input = styled.input`
   border-bottom: #61dafb 5px solid;
   caret-color: #bdf1ff;
   color: rgba(255, 255, 255, 0.8);
-  font-size: calc(10px + 1.5vmin);
+  font-size: 20px;
   font-family: inherit;
   font-weight: normal;
   margin: 5px auto 30px;
   padding: 5px 0;
   &::placeholder {
     color: rgba(255, 255, 255, 0.3);
-    font-size: calc(10px + 1vmin);
+    font-size: 20px;
+  }
+  &:focus {
+    outline: none;
   }
 `;
 
 const NextQuote = styled.div`
   color: rgba(255, 255, 255, 0.3);
-  font-size: calc(10px + 1.2vmin);
+  font-size: 19px;
   span {
     padding-right: 20px;
     font-weight: bold;
@@ -77,8 +84,8 @@ export default function TypingArea({}: Props): ReactElement {
     }
   }, [input, index, quotes]);
 
-  if (error) return <div>An error has occurred:{error.message}</div>;
-  if (!quotes) return <div>Loading...</div>;
+  if (error) return <Wrapper>An error has occurred:{error.message}</Wrapper>;
+  if (!quotes) return <Wrapper>Loading...</Wrapper>;
 
   const letterCheck = (el: string, i: number): { color?: string } => {
     let styles = {};
@@ -122,6 +129,7 @@ export default function TypingArea({}: Props): ReactElement {
         placeholder="Type the sentence above"
         onChange={(e) => setInput(e.target.value)}
         value={input}
+        autoFocus
       />
       {nextQuote}
     </Wrapper>
