@@ -1,8 +1,16 @@
-import React, { ReactElement, useState, useEffect } from 'react';
+import React, { ReactElement, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import useSWR from 'swr';
 
-interface Props {}
+interface Props {
+  disabled: boolean;
+  setStarted: () => void;
+  setSessionData: (data: {
+    total: number;
+    mistakes: number;
+    index: number;
+  }) => void;
+}
 
 interface Data {
   text: string;
@@ -55,17 +63,27 @@ function shuffleArray(array: Data[]) {
   }
 }
 
-export default function TypingArea({}: Props): ReactElement {
+export default function TypingArea({
+  disabled,
+  setStarted,
+  setSessionData
+}: Props): ReactElement {
   const [input, setInput] = useState<string>('');
   const [index, setIndex] = useState<number>(0);
   const [quotes, setquotes] = useState<Data[] | null>(null);
   const [shouldFetch, setShouldFetch] = useState<Boolean>(true);
+  const [total, setTotal] = useState<number>(0);
+  const [mistakes, setMistakes] = useState<number>(0);
+  const [accCount, setAccCount] = useState<number>(0);
+  const [mistakesArray, setMistakesArray] = useState<boolean[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { data, error } = useSWR(
     shouldFetch ? 'https://type.fit/api/quotes' : null,
     fetcher
   );
 
+  // initialise quotes
   useEffect(() => {
     if (data) {
       const shuffleData = [...data];
@@ -75,19 +93,67 @@ export default function TypingArea({}: Props): ReactElement {
     }
   }, [input, index, data]);
 
+  // Initialise states for checks
+  useEffect(() => {
+    if (accCount === 0 && quotes) setAccCount(quotes[0].text.length);
+    if (!mistakesArray.length && quotes) {
+      setMistakesArray(quotes[0].text.split('').map((_) => true));
+    }
+  }, [accCount, quotes, mistakesArray]);
+
+  // Reach end of quote and proceed to next quote
   useEffect(() => {
     if (quotes) {
       if (quotes[index].text === input && index < quotes.length - 1) {
-        setIndex(index + 1);
+        const newIndex = index + 1;
+        setIndex(newIndex);
         setInput('');
+        setSessionData({ total, mistakes, index: newIndex });
+        setAccCount((prev) => prev + quotes[newIndex].text.length);
+        setMistakesArray(quotes[newIndex].text.split('').map((_) => true));
       }
     }
-  }, [input, index, quotes]);
+  }, [input, total, index, quotes, mistakes, setSessionData]);
 
   if (error) return <Wrapper>An error has occurred:{error.message}</Wrapper>;
   if (!quotes) return <Wrapper>Loading...</Wrapper>;
 
-  const letterCheck = (el: string, i: number): { color?: string } => {
+  const inputHandler = (value: string) => {
+    setInput(value);
+    if (input.length === 0 && index === 0) setStarted();
+    const newTotal = updateTotal(value);
+    const newMistakes = checkMistake(value);
+    setSessionData({ total: newTotal, mistakes: newMistakes, index });
+  };
+
+  const updateTotal = (value: string) => {
+    let newTotal = total;
+    if (accCount > total && value.length <= quotes[index].text.length) {
+      newTotal = accCount - quotes[index].text.length + value.length;
+      if (newTotal > total) {
+        setTotal(newTotal);
+        return newTotal;
+      }
+    }
+    return total;
+  };
+
+  const checkMistake = (value: string) => {
+    const last = value.length - 1;
+    const mismatch =
+      mistakesArray[last] && value[last] !== quotes[index].text[last];
+    let newMistakes = mistakes;
+    if (mismatch) {
+      newMistakes = mistakes + 1;
+      setMistakes(newMistakes);
+      const newMistakesArray = mistakesArray;
+      newMistakesArray[last] = false;
+      setMistakesArray(newMistakesArray);
+    }
+    return newMistakes;
+  };
+
+  const colorizeLetter = (el: string, i: number): { color?: string } => {
     let styles = {};
     if (input.length > i) {
       el === input[i]
@@ -97,6 +163,10 @@ export default function TypingArea({}: Props): ReactElement {
     return styles;
   };
 
+  const focusInput = () => {
+    setTimeout(() => inputRef.current && inputRef.current.focus(), 0);
+  };
+
   let currentQuote: JSX.Element[] | null = null;
   let nextQuote: JSX.Element | null = null;
 
@@ -104,7 +174,7 @@ export default function TypingArea({}: Props): ReactElement {
     currentQuote = quotes[index].text
       .split('')
       .map((letter: string, i: number) => (
-        <span style={letterCheck(letter, i)} key={i}>
+        <span style={colorizeLetter(letter, i)} key={i}>
           {letter}
         </span>
       ));
@@ -122,14 +192,20 @@ export default function TypingArea({}: Props): ReactElement {
       );
   }
 
+  console.log(inputRef);
+
   return (
     <Wrapper>
       <div>{currentQuote}</div>
       <Input
+        type="text"
+        disabled={disabled}
         placeholder="Type the sentence above"
-        onChange={(e) => setInput(e.target.value)}
+        onChange={(e) => inputHandler(e.target.value)}
         value={input}
         autoFocus
+        onBlur={focusInput}
+        ref={inputRef}
       />
       {nextQuote}
     </Wrapper>

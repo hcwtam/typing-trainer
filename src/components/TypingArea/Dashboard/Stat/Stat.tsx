@@ -1,30 +1,33 @@
 import React, { ReactElement } from 'react';
+import styled from 'styled-components';
 
 interface Props {
   title: string;
-  stat: string;
+  stat: string | number;
   other?: string;
 }
+
+const Display = styled.div`
+  margin: 8px auto;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 600;
+`;
+
+const Unit = styled.span`
+  margin-left: 3px;
+  color: #797c8d;
+  font-size: 14px;
+`;
 
 export default function Stat({ title, stat, other }: Props): ReactElement {
   return (
     <>
       <h6>{title}</h6>
-      <div
-        style={{
-          margin: '8px auto',
-          textAlign: 'center',
-          fontSize: 32,
-          fontWeight: 600
-        }}
-      >
+      <Display>
         {stat}
-        {other ? (
-          <span style={{ marginLeft: 3, color: '#797c8d', fontSize: 14 }}>
-            {other}
-          </span>
-        ) : null}
-      </div>
+        {other ? <Unit>{other}</Unit> : null}
+      </Display>
     </>
   );
 }

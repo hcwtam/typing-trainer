@@ -1,7 +1,9 @@
 import React, { ReactElement } from 'react';
 import styled from 'styled-components';
 
-interface Props {}
+interface Props {
+  WPM: number;
+}
 
 const Meter = styled.div`
   width: 250px;
@@ -19,6 +21,7 @@ const Body = styled.div`
   border-top-left-radius: 100% 200%;
   border-top-right-radius: 100% 200%;
   overflow: hidden;
+  box-shadow: inset 0 0 20px #505884;
 `;
 
 const Fill = styled.div`
@@ -29,8 +32,10 @@ const Fill = styled.div`
   height: 100%;
   background: #61dafb;
   transform-origin: center top;
-  transform: rotate(150deg);
-  transition: transform 0.2s ease-out;
+  transform: ${(props: { angle: number }) =>
+    props.angle ? `rotate(${props.angle}deg)` : `rotate(0deg)`};
+  transition: transform 1s ease-out;
+  box-shadow: inset 0 0 20px #505884;
 `;
 
 const Cover = styled.div`
@@ -49,13 +54,13 @@ const Cover = styled.div`
   box-sizing: border-box;
 `;
 
-export default function Gauge({}: Props): ReactElement {
+export default function Gauge({ WPM }: Props): ReactElement {
   return (
     <Meter>
       <Body>
-        <Fill />
+        <Fill angle={WPM} />
         <Cover>
-          10
+          {WPM}
           <span style={{ marginLeft: 3 }}>
             {' '}
             <h6>WPM</h6>

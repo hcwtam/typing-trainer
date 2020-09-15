@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import Dashboard from './components/TypingArea/Dashboard/Dashboard';
 
@@ -16,15 +16,75 @@ const MainWrapper = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 1.5vmin);
+  font-size: 21px;
   color: white;
 `;
 
 function App() {
-  return (
+  const [startTime, setStartTime] = useState<number>(NaN);
+  const [disabled, setDisabled] = useState<boolean>(false);
+  const [sessionData, setSessionData] = useState({
+    total: 0,
+    mistakes: 0,
+    index: 0
+  });
+  const [remount, setRemount] = useState(Date.now());
+  const [isComputer, setIsComputer] = useState(window.innerWidth >= 800);
+
+  const checkViewportWidth = useCallback(() => {
+    if (window.innerWidth < 800) setIsComputer(false);
+    if (isComputer === false && window.innerWidth >= 800) setIsComputer(true);
+  }, [isComputer]);
+
+  useEffect(() => {
+    window.addEventListener('resize', checkViewportWidth);
+    return () => {
+      window.removeEventListener('resize', checkViewportWidth);
+    };
+  }, [checkViewportWidth]);
+
+  const reset = () => {
+    setSessionData({
+      total: 0,
+      mistakes: 0,
+      index: 0
+    });
+    setDisabled(false);
+    setRemount(Date.now());
+  };
+
+  return isComputer ? (
     <MainWrapper>
-      <Dashboard />
-      <TypingArea />
+      <Dashboard
+        disabled={disabled}
+        startTime={startTime}
+        setFinished={() => {
+          setStartTime(NaN);
+          setDisabled(true);
+        }}
+        reset={reset}
+        sessionData={sessionData}
+      />
+      <TypingArea
+        key={remount}
+        disabled={disabled}
+        setStarted={() => {
+          setStartTime(Date.now());
+          setDisabled(false);
+        }}
+        setSessionData={(data: {
+          total: number;
+          mistakes: number;
+          index: number;
+        }) => setSessionData(data)}
+      />
+    </MainWrapper>
+  ) : (
+    <MainWrapper>
+      <div style={{ padding: '5vw' }}>
+        This app is for computer users. Please maximise your browser on your
+        desktop/ laptop.
+      </div>
     </MainWrapper>
   );
 }

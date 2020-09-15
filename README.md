@@ -18,7 +18,7 @@
 ## Built With
 
 - [React](https://reactjs.org/)
-- [CSS Modules](https://github.com/css-modules/css-modules)
+- [styled-components](https://styled-components.com/)
 
 <!-- GETTING STARTED -->
 
