@@ -192,8 +192,6 @@ export default function TypingArea({
       );
   }
 
-  console.log(inputRef);
-
   return (
     <Wrapper>
       <div>{currentQuote}</div>
